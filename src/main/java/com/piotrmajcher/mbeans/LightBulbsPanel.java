@@ -6,12 +6,13 @@ import java.awt.GridLayout;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-public class LightBulbsPanel extends JPanel {
+public class LightBulbsPanel extends JPanel implements ILightBulbsPanel{
 	
 	private static final int ROWS = 3;
 	private static final int COLUMNS = 2;
@@ -24,12 +25,14 @@ public class LightBulbsPanel extends JPanel {
 	
 	
 	private List<JPanel> lightbulbsList;
+	private List<LightChangedEventListener> lightChangedEventListenerList;
 	
 	public LightBulbsPanel() {
 		super();
 		
 		setLayout(new GridLayout(ROWS,COLUMNS));
 		lightbulbsList = new ArrayList<JPanel>(LIGHTBULBS);
+		lightChangedEventListenerList = new LinkedList<LightChangedEventListener>();
 		
 		for (int i = 0; i < LIGHTBULBS; i++) {
 			JPanel lightbulb = new JPanel();
@@ -95,12 +98,43 @@ public class LightBulbsPanel extends JPanel {
 			
 		if (currentColor.equals(OFF_COLOR)) {
 			lightbulb.setBackground(ON_COLOR);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), true);
 		} else if (currentColor.equals(ON_COLOR)) {
 			lightbulb.setBackground(OFF_COLOR);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), false);
 		} else if (currentColor.equals(OFF_COLOR_HOVER)) {
 			lightbulb.setBackground(ON_COLOR_HOVER);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), true);
 		} else if (currentColor.equals(ON_COLOR_HOVER)) {
 			lightbulb.setBackground(OFF_COLOR_HOVER);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), false);
+		}
+		repaint();
+	}
+	
+	private void switchLightOn(JPanel lightbulb) {
+		Color currentColor = lightbulb.getBackground();
+		
+		if (currentColor.equals(OFF_COLOR)) {
+			lightbulb.setBackground(ON_COLOR);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), true);
+		} else if (currentColor.equals(OFF_COLOR_HOVER)) {
+			lightbulb.setBackground(ON_COLOR_HOVER);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), true);
+		}
+		
+		repaint();
+	}
+	
+	private void switchLightOff(JPanel lightbulb) {
+		Color currentColor = lightbulb.getBackground();
+		
+		if (currentColor.equals(ON_COLOR)) {
+			lightbulb.setBackground(OFF_COLOR);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), false);
+		} else if (currentColor.equals(ON_COLOR_HOVER)) {
+			lightbulb.setBackground(OFF_COLOR_HOVER);
+			generateLightChangedEvent(lightbulbsList.indexOf(lightbulb), false);
 		}
 		repaint();
 	}
@@ -108,6 +142,29 @@ public class LightBulbsPanel extends JPanel {
 	public void changeLight(int lightbulbNumber) {
 		if (lightbulbNumber >= 0 && lightbulbNumber < LIGHTBULBS) {
 			switchLightOnOff(lightbulbsList.get(lightbulbNumber));
+		}
+	}
+	
+	public void turnLightOn(int lightBulbNumber) {
+		if (lightBulbNumber >= 0 && lightBulbNumber < LIGHTBULBS) {
+			switchLightOn(lightbulbsList.get(lightBulbNumber));
+		}
+	}
+	
+	public void turnLightOff(int lightBulbNumber) {
+		if (lightBulbNumber >= 0 && lightBulbNumber < LIGHTBULBS) {
+			switchLightOff(lightbulbsList.get(lightBulbNumber));
+		}
+	}
+
+	public void addLightchangedEventListener(LightChangedEventListener listener) {
+		this.lightChangedEventListenerList.add(listener);
+	}
+	
+	private void generateLightChangedEvent(Integer lightBulbNumber, boolean wasTurnedOn) {
+		LightChangedEvent event = new LightChangedEvent(lightBulbNumber, wasTurnedOn);
+		for (LightChangedEventListener listener : lightChangedEventListenerList) {
+			listener.onLightChangedEvent(event);
 		}
 	}
 }
